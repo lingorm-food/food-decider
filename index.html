@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什么 - 美食决策助手</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        /* 头部 */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        /* 主内容区 */
+        main {
+            padding: 25px;
+        }
+        
+        section {
+            margin-bottom: 25px;
+        }
+        
+        h2 {
+            margin-bottom: 15px;
+            color: #444;
+            font-size: 1.3rem;
+        }
+        
+        /* 标签样式 */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .tag {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .tag:hover {
+            background: #e0e0e0;
+        }
+        
+        .tag.selected {
+            background: #4CAF50;
+            color: white;
+            border-color: #388E3C;
+        }
+        
+        /* 按钮 */
+        .main-button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto;
+            transition: transform 0.3s;
+        }
+        
+        .main-button:hover {
+            transform: translateY(-3px);
+        }
+        
+        /* 结果区域 */
+        .result-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-name {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        /* 历史记录 */
+        .history-item {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .history-time {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 10px;
+            }
+            
+            header h1 {
+                font-size: 1.7rem;
+            }
+            
+            .main-button {
+                padding: 12px 30px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍚 今天吃什么？</h1>
+            <p>智能决策助手 · 告别选择困难</p >
+        </header>
+        
+        <main>
+            <!-- 偏好选择 -->
+            <section>
+                <h2>📋 选择偏好</h2>
+                <p>选择标签，优先推荐匹配的餐厅</p >
+                <div class="tags" id="tagContainer"></div>
+            </section>
+            
+            <!-- 决策按钮 -->
+            <section style="text-align: center;">
+                <button class="main-button" id="decideButton">🎲 帮我决定！</button>
+            </section>
+            
+            <!-- 结果展示 -->
+            <section>
+                <div class="result-box" id="resultBox">
+                    <div class="result-name" id="resultName">...</div>
+                    <div id="resultTags"></div>
+                    <button class="tag" onclick="pickRandom()" style="margin-top: 15px; background: rgba(255,255,255,0.2); color: white;">
+                        🔄 重新选择
+                    </button>
+                </div>
+            </section>
+            
+            <!-- 历史记录 -->
+            <section>
+                <h2>📊 选择历史</h2>
+                <div id="historyList"></div>
+            </section>
+        </main>
+        
+        <footer style="text-align: center; padding: 15px; color: #666; font-size: 0.9rem;">
+            <p>基于动态权重算法 · 数据本地保存</p >
+        </footer>
+    </div>
+    
+    <script>
+    // ========== 数据初始化 ==========
+    console.log("=== 美食决策助手启动 ===");
+    
+    // 可用标签
+    const availableTags = ["便宜", "快餐", "外卖", "辣", "健康", "面食", "米饭"];
+    
+    // 餐厅数据
+    let restaurants = [
+        { id: 1, name: "食堂一楼", tags: ["便宜", "健康", "米饭"], weight: 10, count: 0 },
+        { id: 2, name: "麻辣烫", tags: ["辣", "外卖"], weight: 10, count: 0 },
+        { id: 3, name: "黄焖鸡", tags: ["外卖", "米饭"], weight: 10, count: 0 },
+        { id: 4, name: "沙县小吃", tags: ["便宜", "快餐"], weight: 10, count: 0 },
+        { id: 5, name: "麦当劳", tags: ["快餐", "外卖"], weight: 10, count: 0 },
+        { id: 6, name: "牛肉面", tags: ["面食", "辣"], weight: 10, count: 0 },
+        { id: 7, name: "饺子馆", tags: ["面食", "便宜"], weight: 10, count: 0 },
+        { id: 8, name: "炒饭店", tags: ["米饭", "快餐"], weight: 10, count: 0 }
+    ];
+    
+    // 用户状态
+    let selectedTags = [];
+    let history = [];
+    
+    // ========== 工具函数 ==========
+    
+    // 从本地存储加载数据
+    function loadData() {
+        try {
+            const saved = localStorage.getItem('foodData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                restaurants = data.restaurants || restaurants;
+                history = data.history || [];
+                console.log("加载保存的数据");
+            }
+        } catch (e) {
+            console.log("使用默认数据");
+        }
+    }
+    
+    // 保存数据到本地存储
+    function saveData() {
+        try {
+            const data = {
+                restaurants: restaurants,
+                history: history
+            };
+            localStorage.setItem('foodData', JSON.stringify(data));
+            console.log("数据已保存");
+        } catch (e) {
+            console.log("保存失败:", e);
+        }
+    }
+    
+    // 获取最近选择的餐厅（避免重复）
+    function getRecentChoices() {
+        return history.slice(-3).map(item => item.id);
+    }
+    
+    // ========== 核心算法 ==========
+
+// 带权重的随机选择
+function weightedRandomSelection() {
+    // 1. 根据标签筛选
+    let candidates = restaurants;
+    if (selectedTags.length > 0) {
+        candidates = restaurants.filter(r =>
+            selectedTags.some(tag => r.tags.includes(tag))
+        );
+        if (candidates.length === 0) {
+            candidates = restaurants;
+        }
+    }
+    
+    // 2. 排除最近选择的
+    const recent = getRecentChoices();
+    let available = candidates.filter(r => !recent.includes(r.id));
+    if (available.length === 0) {
+        available = candidates;
+    }
+    
+    // 3. 计算总权重
+    const totalWeight = available.reduce((sum, r) => sum + r.weight, 0);
+    if (totalWeight <= 0) {
+        return available[0] || restaurants[0];
+    }
+    
+    // 4. 加权随机选择
+    let random = Math.random() * totalWeight;
+    for (const r of available) {
+        random -= r.weight;
+        if (random <= 0) {
+            return r;
+        }
+    }
+    
+    return available[0];
+}
+
+// 更新权重
+function updateWeights(selected) {
+    // 降低被选中的权重
+    selected.weight = Math.max(1, selected.weight * 0.7);
+    selected.count++;
+    
+    // 提高其他餐厅的权重
+    restaurants.forEach(r => {
+        if (r.id !== selected.id) {
+            r.weight = Math.min(20, r.weight * 1.05);
+        }
+    });
+}
+
+// ========== 界面函数 ==========
+
+// 初始化标签
+function initTags() {
+    const container = document.getElementById('tagContainer');
+    container.innerHTML = availableTags.map(tag => `
+        <div class="tag ${selectedTags.includes(tag) ? 'selected' : ''}" 
+             onclick="toggleTag('${tag}')">
+            ${tag}
+        </div>
+    `).join('');
+}
+
+// 切换标签选择
+function toggleTag(tag) {
+    const index = selectedTags.indexOf(tag);
+    if (index === -1) {
+        selectedTags.push(tag);
+    } else {
+        selectedTags.splice(index, 1);
+    }
+    initTags();
+    console.log("选中标签:", selectedTags);
+}
+
+        // 随机选择主函数
+        function pickRandom() {
+            console.log("开始随机选择");
+            
+            // 执行选择
+            const selected = weightedRandomSelection();
+            console.log("选择了:", selected.name);
+            
+            // 更新数据
+            updateWeights(selected);
+            
+            // 添加到历史
+            history.push({
+                id: selected.id,
+                name: selected.name,
+                time: new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'}),
+                date: new Date().toLocaleDateString()
+            });
+            
+            // 只保留最近10条
+            if (history.length > 10) {
+                history = history.slice(-10);
+            }
+            
+            // 保存数据
+            saveData();
+            
+            // 更新界面
+            showResult(selected);
+            updateHistory();
+        }
+        
+        // 显示结果
+        function showResult(restaurant) {
+            const resultBox = document.getElementById('resultBox');
+            const resultName = document.getElementById('resultName');
+            const resultTags = document.getElementById('resultTags');
+            
+            resultName.textContent = restaurant.name;
+            resultTags.innerHTML = restaurant.tags.map(tag => 
+                `<span class="tag" style="margin: 3px; background: rgba(255,255,255,0.3);">${tag}</span>`
+            ).join('');
+            
+            resultBox.style.display = 'block';
+            
+            // 滚动到结果位置
+            resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // 更新历史记录显示
+        function updateHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = history.slice().reverse().map(item => `
+                <div class="history-item">
+                    <span>${item.name}</span>
+                    <span class="history-time">${item.time}</span>
+                </div>
+            `).join('');
+        }
+        
+        // ========== 初始化 ==========
+        
+        function init() {
+            console.log("初始化应用");
+            
+            // 加载数据
+            loadData();
+            
+            // 初始化界面
+            initTags();
+            updateHistory();
+            
+            // 绑定按钮事件
+            document.getElementById('decideButton').onclick = pickRandom;
+            
+            // 自动运行一次选择（演示用）
+            setTimeout(() => {
+                if (history.length === 0) {
+                    console.log("自动运行演示选择");
+                    pickRandom();
+                }
+            }, 1000);
+            
+            console.log("初始化完成");
+            console.log("餐厅数量:", restaurants.length);
+            console.log("历史记录:", history.length);
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // 调试函数
+        window.debugInfo = function() {
+            return {
+                restaurants: restaurants,
+                selectedTags: selectedTags,
+                history: history
+            };
+        };
+    </script>
+</body>
+</html>
