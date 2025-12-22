@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美食决策助手 - 访问入口</title>
+    <link rel="stylesheet" href="proxy.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍔</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .option-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+            background: white;
+        }
+        
+        .option-card.recommended {
+            border-color: #48bb78;
+            background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+        }
+        
+        .recommended-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #48bb78;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .option-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        .option-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .option-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            min-height: 80px;
+        }
+        
+        .option-features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+        
+        .option-features li {
+            padding: 8px 0;
+            color: #555;
+            position: relative;
+            padding-left: 25px;
+        }
+        
+        .option-features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #48bb78;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+            color: #4a5568;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #718096;
+            border-top: 1px solid #e2e8f0;
+            background: #f8f9fa;
+        }
+        
+        .instructions {
+            background: #fff8e1;
+            border-left: 4px solid #ffb300;
+            padding: 25px;
+            margin: 40px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .instructions h3 {
+            color: #d97706;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .options-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .option-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ 美食决策助手</h1>
+            <p>告别选择困难症，让每一餐都充满惊喜！智能推荐、快速决策，为您的美食之旅提供完美方案。</p >
+        </div>
+        
+        <div class="main-content">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: #333; margin-bottom: 10px;">选择最适合您的访问方式</h2>
+                <p style="color: #666; max-width: 600px; margin: 0 auto;">根据您的网络环境和需求，选择以下任意一种方式开始使用</p >
+            </div>
+            
+            <div class="options-grid">
+                <!-- 选项1：JavaScript代理（推荐） -->
+                <div class="option-card recommended">
+                    <div class="recommended-badge">🌟 推荐</div>
+                    <div class="option-icon">🚀</div>
+                    <div class="option-title">智能代理访问</div>
+                    <div class="option-description">
+                        使用先进的JavaScript技术动态加载，自动处理网络限制，无需任何配置即可使用。
+                    </div>
+                    <ul class="option-features">
+                        <li>无需修改hosts文件</li>
+                        <li>自动重试机制</li>
+                        <li>资源自动优化</li>
+                        <li>最佳兼容性</li>
+                    </ul>
+                    <a href=" " class="btn">立即体验智能版</a >
+                    <button onclick="copyLink('js-proxy.html')" class="btn btn-secondary">📋 复制链接</button>
+                </div>
+                
+                <!-- 选项2：直接访问 -->
+                <div class="option-card">
+                    <div class="option-icon">⚡</div>
+                    <div class="option-title">最佳体验模式</div>
+                    <div class="option-description">
+                        直接访问原网站，获得最快速度和完整功能。需要简单的本地配置。
+                    </div>
+                    <ul class="option-features">
+                        <li>最快加载速度</li>
+                        <li>完整功能体验</li>
+                        <li>无代理延迟</li>
+                        <li>推荐自己使用</li>
+                    </ul>
+                    <a href="../index.html" class="btn" id="direct-link">访问原网站</a >
+                    <button onclick="showInstructions()" class="btn btn-secondary">📝 查看配置方法</button>
+                </div>
+                
+                <!-- 选项3：Iframe备用 -->
+                <div class="option-card">
+                    <div class="option-icon">🛡️</div>
+                    <div class="option-title">备用访问方案</div>
+                    <div class="option-description">
+                        传统的iframe嵌入方式，兼容性最好。如果其他方式遇到问题时的备选方案。
+                    </div>
+                    <ul class="option-features">
+                        <li>最高兼容性</li>
+                        <li>无需JavaScript</li>
+                        <li>应急备用</li>
+                        <li>简单稳定</li>
+                    </ul>
+                    <a href="iframe-proxy.html" class="btn">使用备用方案</a >
+                    <button onclick="copyLink('iframe-proxy.html')" class="btn btn-secondary">📋 复制链接</button>
+                </div>
+            </div>
+            
+            <div class="instructions" id="instructions" style="display: none;">
+                <h3>📋 最佳体验配置指南</h3>
+                <p>要获得最佳体验，请按照以下步骤配置：</p >
+                <ol style="margin: 15px 0 15px 20px; color: #555;">
+                    <li><strong>Windows系统</strong>：以管理员身份运行命令提示符</li>
+                    <li>运行命令：
+                        <pre style="background: #f7fafc; padding: 15px; border-radius: 5px; margin: 10px 0; overflow-x: auto;">
+# 添加hosts记录
+echo 185.199.108.153 dig.ua >> C:\Windows\System32\drivers\etc\hosts
+echo 185.199.108.153 www.dig.ua >> C:\Windows\System32\drivers\etc\hosts
+
+# 刷新DNS缓存
+ipconfig /flushdns</pre>
+                    </li>
+                    <li>完成后，<a href="../index.html" id="direct-link2">点击这里直接访问</a ></li>
+                </ol>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button onclick="hideInstructions()" class="btn" style="width: auto; padding: 10px 20px;">关闭说明</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 40px; padding: 25px; background: #f0f9ff; border-radius: 10px; border-left: 4px solid #4299e1;">
+                <h3 style="color: #2b6cb0; margin-bottom: 15px;">💡 使用建议</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div>
+                        <h4 style="color: #2d3748; margin-bottom: 10px;">👤 自己使用</h4>
+                        <p style="color: #4a5568;">推荐配置hosts后直接访问，体验最佳</p >
+                    </div>
+                    <div>
+                        <h4 style="color: #2d3748; margin-bottom: 10px;">👥 分享给他人</h4>
+                        <p style="color: #4a5568;">发送智能代理链接，对方无需任何配置</p >
+                    </div>
+                    <div>
+                        <h4 style="color: #2d3748; margin-bottom: 10px;">📱 移动设备</h4>
+                        <p style="color: #4a5568;">所有方式都支持手机和平板</p >
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 美食决策助手 | 项目部署于 GitHub Pages</p >
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                <a href="https://github.com/lingorm-food/food-decider" style="color: #718096;">查看源代码</a > | 
+                <a href="https://github.com/lingorm-food/food-decider/issues" style="color: #718096;">反馈问题</a > | 
+                <a href="../README.md" style="color: #718096;">项目说明</a >
+            </p >
+        </div>
+    </div>
+
+    <script>
+        // 显示/隐藏配置说明
+        function showInstructions() {
+            document.getElementById('instructions').style.display = 'block';
+            document.getElementById('instructions').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function hideInstructions() {
+            document.getElementById('instructions').style.display = 'none';
+        }
+        
+        // 复制链接功能
+        function copyLink(page) {
+            const fullUrl = window.location.origin + window.location.pathname.replace('index.html', '') + page;
+            navigator.clipboard.writeText(fullUrl)
+                .then(() => {
+                    alert('链接已复制到剪贴板：\n' + fullUrl);
+                })
+                .catch(err => {
+                    prompt('请手动复制链接：', fullUrl);
+                });
+        }
+        
+        // 检测是否可以直接访问原网站
+        window.addEventListener('DOMContentLoaded', () => {
+            // 测试直接访问
+            fetch('../index.html', { method: 'HEAD', mode: 'no-cors' })
+                .then(() => {
+                    // 如果能访问，更新按钮状态
+                    const directLinks = document.querySelectorAll('#direct-link, #direct-link2');
+                    directLinks.forEach(link => {
+                        link.innerHTML = '🎉 直接访问（已就绪）';
+                        link.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+                    });
+                })
+                .catch(() => {
+                    // 无法直接访问
+                    const directLinks = document.querySelectorAll('#direct-link, #direct-link2');
+                    directLinks.forEach(link => {
+                        link.innerHTML = '⚙️ 需要配置hosts';
+                        link.style.background = 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)';
+                    });
+                });
+        });
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            switch(e.key) {
+                case '1':
+                    window.location.href = 'js-proxy.html';
+                    break;
+                case '2':
+                    document.querySelector('#direct-link').click();
+                    break;
+                case '3':
+                    window.location.href = 'iframe-proxy.html';
+                    break;
+                case 'i':
+                case 'I':
+                    showInstructions();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
