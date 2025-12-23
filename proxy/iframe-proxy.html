@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美食决策助手 - Iframe备用版本</title>
+    <link rel="stylesheet" href="proxy.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍔</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        #app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部控制栏 */
+        .control-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            position: relative;
+        }
+        
+        .control-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-title .icon {
+            font-size: 1.2em;
+        }
+        
+        .control-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .control-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .control-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .control-btn.secondary {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        
+        .control-btn.secondary:hover {
+            background: #e2e8f0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Iframe容器 */
+        .iframe-container {
+            flex: 1;
+            position: relative;
+            background: #f8f9fa;
+        }
+        
+        .iframe-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            z-index: 10;
+            transition: opacity 0.5s;
+        }
+        
+        .iframe-loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .iframe-content {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+        
+        /* 底部状态栏 */
+        .status-bar {
+            background: #f8f9fa;
+            border-top: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+            color: #718096;
+        }
+        
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #48bb78;
+        }
+        
+        .status-dot.loading {
+            background: #ed8936;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-dot.error {
+            background: #f56565;
+        }
+        
+        /* 警告横幅 */
+        .warning-banner {
+            background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+            border-left: 4px solid #ed8936;
+            padding: 15px 20px;
+            margin: 0 20px 20px;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.5s ease-out;
+        }        .warning-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .warning-icon {
+            font-size: 1.5em;
+            color: #ed8936;
+        }
+        
+        .warning-text {
+            color: #c05621;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .warning-text a {
+            color: #2b6cb0;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        
+        .warning-text a:hover {
+            text-decoration: underline;
+        }
+        
+        .warning-close {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            color: #a0aec0;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .warning-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #718096;
+        }
+        
+        /* 错误提示 */
+        .error-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+            z-index: 100;
+        }
+        
+        .error-overlay.active {
+            display: flex;
+            animation: fadeIn 0.5s;
+        }
+        
+        .error-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #f56565;
+        }
+        
+        .error-title {
+            font-size: 1.8em;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+        
+        .error-message {
+            color: #718096;
+            max-width: 500px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        /* 快捷操作菜单 */
+        .quick-actions {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 100;
+        }
+        
+        .action-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+        
+        .action-btn.secondary {
+            background: #ed8936;
+            box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .control-bar {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .control-title {
+                font-size: 1em;
+                order: 1;
+                flex: 1;
+            }
+            
+            .control-actions {
+                order: 2;
+                width: 100%;
+                justify-content: center;
+                margin-top: 5px;
+            }
+            
+            .control-btn {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px 15px;
+            }
+            
+            .warning-banner {
+                margin: 0 10px 15px;
+                padding: 12px 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .quick-actions {
+                bottom: 70px;
+                right: 15px;
+            }
+            
+            .action-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .control-btn .text {
+                display: none;
+            }
+            
+            .control-btn {
+                padding: 8px;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                justify-content: center;
+            }
+            
+            .warning-text {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>    <div id="app-container">
+        <!-- 顶部控制栏 -->
+        <div class="control-bar">
+            <div class="control-title">
+                <span class="icon">🛡️</span>
+                <span>美食决策助手 - Iframe版本</span>
+            </div>
+            <div class="control-actions">
+                <button class="control-btn" onclick="goToHome()">
+                    <span class="icon">🏠</span>
+                    <span class="text">返回首页</span>
+                </button>
+                <button class="control-btn" onclick="goToSmartProxy()">
+                    <span class="icon">🚀</span>
+                    <span class="text">智能版本</span>
+                </button>
+                <button class="control-btn" onclick="refreshFrame()">
+                    <span class="icon">🔄</span>
+                    <span class="text">刷新页面</span>
+                </button>
+                <button class="control-btn secondary" onclick="toggleFullscreen()">
+                    <span class="icon">⛶</span>
+                    <span class="text">全屏模式</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 警告横幅 -->
+        <div class="warning-banner" id="warningBanner">
+            <div class="warning-content">
+                <div class="warning-icon">⚠️</div>
+                <div class="warning-text">
+                    <strong>提示：</strong>您正在使用Iframe备用版本。某些功能可能受限，推荐使用 
+                    <a href=" " onclick="goToSmartProxy(); return false;">智能版本</a > 
+                    获得更好体验。
+                </div>
+            </div>
+            <button class="warning-close" onclick="hideWarning()">×</button>
+        </div>
+        
+        <!-- Iframe容器 -->
+        <div class="iframe-container">
+            <!-- 加载动画 -->
+            <div class="iframe-loading" id="loadingScreen">
+                <div class="loading-spinner"></div>
+                <div style="color: #667eea; font-weight: 500; margin-bottom: 10px;">正在加载美食决策助手...</div>
+                <div style="color: #718096; font-size: 0.9em; text-align: center; max-width: 400px;">
+                    请稍候，我们正在为您加载网站内容
+                </div>
+            </div>
+            
+            <!-- 错误提示 -->
+            <div class="error-overlay" id="errorScreen">
+                <div class="error-icon">😟</div>
+                <div class="error-title">加载失败</div>
+                <div class="error-message" id="errorMessage">
+                    无法加载美食决策助手。可能是网络问题或网站暂时不可用。
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                    <button class="control-btn" onclick="retryLoading()">
+                        <span class="icon">🔄</span>
+                        重新加载
+                    </button>
+                    <button class="control-btn secondary" onclick="goToSmartProxy()">
+                        <span class="icon">🚀</span>
+                        切换到智能版
+                    </button>
+                    <button class="control-btn secondary" onclick="goToHome()">
+                        <span class="icon">🏠</span>
+                        返回首页
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Iframe内容 -->
+            <iframe 
+                class="iframe-content" 
+                id="contentFrame"
+                src="http://dig.ua"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+                allow="fullscreen"
+                onload="onFrameLoad()"
+                onerror="onFrameError()"
+            ></iframe>
+        </div>
+        
+        <!-- 底部状态栏 -->
+        <div class="status-bar">
+            <div class="status-info">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">正在连接...</span>
+                </div>
+                <div id="pageInfo">等待页面加载...</div>
+            </div>
+            <div>
+                <span id="currentTime">--:--:--</span>
+            </div>
+        </div>
+        
+        <!-- 快捷操作按钮 -->
+        <div class="quick-actions">
+            <button class="action-btn" onclick="scrollToTop()" title="回到顶部">
+                ↑
+            </button>
+            <button class="action-btn secondary" onclick="openOriginal()" title="在新窗口打开">
+                ↗
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const CONFIG = {
+            targetUrl: 'http://dig.ua',
+            retryCount: 3,
+            retryDelay: 3000,
+            autoHideWarning: true,
+            warningHideTime: 8000
+        };
+
+        // 状态管理
+        let currentStatus = 'loading'; // loading, loaded, error
+        let retryAttempts = 0;
+        let isFullscreen = false;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            
+            // 自动隐藏警告
+            if (CONFIG.autoHideWarning) {
+                setTimeout(() => {
+                    const warning = document.getElementById('warningBanner');
+                    if (warning && warning.style.display !== 'none') {
+                        warning.style.opacity = '0';
+                        setTimeout(() => {
+                            warning.style.display = 'none';
+                        }, 500);
+                    }
+                }, CONFIG.warningHideTime);
+            }
+            
+            // 防止被其他网站嵌入
+            if (window !== top) {
+                top.location = window.location;
+            }
+        });
+
+        // Iframe加载成功
+        function onFrameLoad() {
+            currentStatus = 'loaded';
+            
+            // 隐藏加载动画
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.classList.add('hidden');
+            
+            // 更新状态
+            updateStatus('已连接', 'success');
+            
+            // 更新页面信息
+            try {
+                const frame = document.getElementById('contentFrame');
+                const pageTitle = frame.contentDocument?.title || '美食决策助手';
+                document.getElementById('pageInfo').textContent = `页面: ${pageTitle}`;
+            } catch (e) {
+                // 跨域限制，无法获取页面信息
+                document.getElementById('pageInfo').textContent = '页面加载完成';
+            }
+            
+            // 重置重试计数
+            retryAttempts = 0;
+            
+            console.log('Iframe加载成功');
+        }
+
+        // Iframe加载失败
+        function onFrameError() {
+            if (retryAttempts < CONFIG.retryCount) {
+                retryAttempts++;
+                updateStatus(`连接失败，正在重试 (${retryAttempts}/${CONFIG.retryCount})...`, 'loading');
+                
+                setTimeout(() => {
+                    const frame = document.getElementById('contentFrame');
+                    frame.src = CONFIG.targetUrl + '?retry=' + Date.now();
+                }, CONFIG.retryDelay);
+            } else {
+                currentStatus = 'error';
+                updateStatus('连接失败', 'error');
+                
+                // 显示错误界面
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('errorScreen').classList.add('active');
+                
+                // 设置错误信息
+                const errorMsg = document.getElementById('errorMessage');
+                errorMsg.textContent = `无法连接到美食决策助手。请检查网络连接或尝试其他访问方式。`;
+            }
+        }
+
+        // 更新状态显示
+        function updateStatus(text, type) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            statusText.textContent = text;
+            
+            // 移除所有状态类
+            statusDot.classList.remove('loading', 'error');
+            
+            // 添加新状态类
+            if (type === 'loading') {
+                statusDot.classList.add('loading');
+                statusDot.style.background = '#ed8936';
+            } else if (type === 'error') {
+                statusDot.classList.add('error');
+                statusDot.style.background = '#f56565';
+            } else {
+                statusDot.style.background = '#48bb78';
+            }
+        }
+
+        // 刷新Iframe
+        function refreshFrame() {
+            const frame = document.getElementById('contentFrame');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const errorScreen = document.getElementById('errorScreen');
+            
+            // 重置状态
+            loadingScreen.classList.remove('hidden');
+            errorScreen.classList.remove('active');
+            currentStatus = 'loading';
+            updateStatus('正在刷新...', 'loading');
+            
+            // 重新加载
+            frame.src = CONFIG.targetUrl + '?refresh=' + Date.now();
+        }
+
+        // 重试加载
+        function retryLoading() {
+            retryAttempts = 0;
+            refreshFrame();
+        }
+
+        // 跳转到首页
+        function goToHome() {
+            window.location.href = '../index.html';
+        }
+
+        // 跳转到智能代理
+        function goToSmartProxy() {
+            window.location.href = 'js-proxy.html';
+        }
+
+        // 隐藏警告
+        function hideWarning() {
+            const warning = document.getElementById('warningBanner');
+            warning.style.opacity = '0';
+            setTimeout(() => {
+                warning.style.display = 'none';
+            }, 500);
+        }
+
+        // 切换全屏模式
+        function toggleFullscreen() {
+            const container = document.getElementById('app-container');
+            
+            if (!isFullscreen) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                isFullscreen = true;
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                isFullscreen = false;
+            }
+        }
+
+        // 回到顶部
+        function scrollToTop() {
+            const frame = document.getElementById('contentFrame');
+            try {
+                frame.contentWindow.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (e) {
+                // 跨域限制
+                frame.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // 在新窗口打开原网站
+        function openOriginal() {
+            window.open(CONFIG.targetUrl, '_blank');
+        }
+
+        // 更新当前时间
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            switch(e.key) {
+                case 'r':
+                case 'R':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        refreshFrame();
+                    }
+                    break;
+                case 'f':
+                case 'F':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        toggleFullscreen();
+                    }
+                    break;
+                case 'Escape':
+                    if (isFullscreen) {
+                        toggleFullscreen();
+                    }
+                    break;
+                case '1':
+                    goToHome();
+                    break;
+                case '2':
+                    goToSmartProxy();
+                    break;
+                case '3':
+                    refreshFrame();
+                    break;
+            }
+        });
+
+        // 全屏变化监听
+        document.addEventListener('fullscreenchange', updateFullscreenState);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenState);
+        document.addEventListener('msfullscreenchange', updateFullscreenState);
+
+        function updateFullscreenState() {
+            isFullscreen = !!(document.fullscreenElement || 
+                            document.webkitFullscreenElement || 
+                            document.msFullscreenElement);
+        }
+
+        // 初始化状态
+        updateStatus('正在连接服务器...', 'loading');
+    </script>
+</body>
+</html>
